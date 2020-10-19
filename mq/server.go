@@ -40,10 +40,10 @@ func Run() {
 
 	// Create connection and channel RabbitMQ
 	connection, channel, err := gorabbitmq.Connector{
-		Username: "guest",
-		Password: "guest",
-		Host:     "localhost",
-		Port:     "5672",
+		Username: os.Getenv("MQ_USERNAME"),
+		Password: os.Getenv("MQ_PASSWORD"),
+		Host:     os.Getenv("MQ_HOST"),
+		Port:     os.Getenv("MQ_PORT"),
 	}.Dial()
 	errhandler.HandleError(err, true)
 	defer connection.Close()
