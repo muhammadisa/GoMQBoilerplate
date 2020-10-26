@@ -21,6 +21,8 @@ func NewFoobarUsecase(foobarUsecases foobar.Repository) foobar.Usecase {
 }
 
 func (foobarUsecases foobarUsecase) Store(foobar *models.Foobar) error {
+	foobar.ID = uuid.NewV4()
+	foobar.CreatedAt = time.Now()
 	return foobarUsecases.foobarRepository.Store(foobar)
 }
 

@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"github.com/jinzhu/gorm"
+	dbr "github.com/gocraft/dbr/v2"
 	"github.com/streadway/amqp"
 
 	_foobarApi "github.com/muhammadisa/go-mq-boilerplate/mq/app/foobar/consume"
@@ -11,7 +11,7 @@ import (
 
 // MessageQueue struct
 type MessageQueue struct {
-	DB           *gorm.DB
+	Sess         *dbr.Session
 	MQConnection *amqp.Connection
 	MQChannel    *amqp.Channel
 }
@@ -28,7 +28,7 @@ func (mq MessageQueue) NewMQ() {
 }
 
 func (mq *MessageQueue) initMQForFoobar() chan bool {
-	foobarRepo := _foobarRepo.NewORMFoobarRepo(mq.DB)
+	foobarRepo := _foobarRepo.NewORMFoobarRepo(mq.Sess)
 	foobarUsecase := _foobarUsecase.NewFoobarUsecase(foobarRepo)
 	return _foobarApi.NewFoobarConsumeHandler(mq.MQConnection, mq.MQChannel, foobarUsecase)
 }

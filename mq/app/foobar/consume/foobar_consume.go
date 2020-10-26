@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/muhammadisa/go-mq-boilerplate/mq/models"
-
 	"github.com/muhammadisa/go-mq-boilerplate/mq/app/foobar"
+	"github.com/muhammadisa/go-mq-boilerplate/mq/models"
 	"github.com/muhammadisa/go-mq-boilerplate/mq/utils/errhandler"
 	"github.com/muhammadisa/gorabbitmq"
 	"github.com/streadway/amqp"
@@ -28,7 +27,7 @@ func NewFoobarConsumeHandler(
 	}
 
 	messageFoobar, err := gorabbitmq.Queue{
-		QueueName: "foobar",
+		QueueName: "foobars",
 		Consumer:  "",
 		AutoAck:   false,
 		Exclusive: false,
@@ -43,26 +42,22 @@ func NewFoobarConsumeHandler(
 	foreverFoobar := make(chan bool)
 	go func() {
 		for d := range messageFoobar {
-			attract(d, usecase)
+			var foobar models.Foobar
+			err := json.Unmarshal(d.Body, &foobar)
+			if err != nil {
+				fmt.Println(err)
+				d.Reject(false)
+			} else {
+				err = usecase.foobarUsecase.Store(&foobar)
+				if err != nil {
+					fmt.Println(err)
+					d.Nack(false, true)
+				} else {
+					fmt.Println(foobar)
+					d.Ack(false)
+				}
+			}
 		}
 	}()
 	return foreverFoobar
-}
-
-func attract(delivery amqp.Delivery, usecase *FoobarConsumeHandler) {
-	var foobar *models.Foobar = &models.Foobar{}
-
-	// unmarshaling body
-	err := json.Unmarshal(delivery.Body, &foobar)
-	if err != nil {
-		delivery.Nack(false, true)
-	}
-	// attract to db
-	err = usecase.foobarUsecase.Store(foobar)
-	if err != nil {
-		delivery.Reject(false)
-	}
-	// complete
-	err = delivery.Ack(false)
-	fmt.Println(foobar)
 }

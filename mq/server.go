@@ -2,14 +2,14 @@ package mq
 
 import (
 	"os"
-	"strconv"
 
-	"github.com/muhammadisa/go-mq-boilerplate/mq/routes"
-
+	"github.com/gocraft/dbr/dialect"
+	dbr "github.com/gocraft/dbr/v2"
 	"github.com/joho/godotenv"
+	"github.com/muhammadisa/go-mq-boilerplate/mq/routes"
 	"github.com/muhammadisa/go-mq-boilerplate/mq/utils/errhandler"
+	"github.com/muhammadisa/godbconn"
 	"github.com/muhammadisa/gorabbitmq"
-	"github.com/muhammadisa/gormdbcon"
 )
 
 // Run start running message queue service
@@ -20,7 +20,7 @@ func Run() {
 	errhandler.HandleError(err, true)
 
 	// Load database credential env and use it
-	db, err := gormdbcon.DBCredential{
+	db, err := godbconn.DBCred{
 		DBDriver:   os.Getenv("DB_DRIVER"),
 		DBHost:     os.Getenv("DB_HOST"),
 		DBPort:     os.Getenv("DB_PORT"),
@@ -29,14 +29,14 @@ func Run() {
 		DBName:     os.Getenv("DB_NAME"),
 	}.Connect()
 	errhandler.HandleError(err, true)
-
-	// Load debuging mode env
-	debug, err := strconv.ParseBool(os.Getenv("DEBUG"))
-	errhandler.HandleError(err, true)
-	db.LogMode(debug)
-
-	// Migrate and checking table fields changes
-	Seed{DB: db}.Migrate()
+	conn := &dbr.Connection{
+		DB:            db,
+		EventReceiver: &dbr.NullEventReceiver{},
+		Dialect:       dialect.MySQL,
+	}
+	conn.SetMaxOpenConns(10)
+	session := conn.NewSession(nil)
+	session.Begin()
 
 	// Create connection and channel RabbitMQ
 	connection, channel, err := gorabbitmq.Connector{
@@ -50,7 +50,7 @@ func Run() {
 	defer channel.Close()
 
 	routes.MessageQueue{
-		DB:           db,
+		Sess:         session,
 		MQConnection: connection,
 		MQChannel:    channel,
 	}.NewMQ()
