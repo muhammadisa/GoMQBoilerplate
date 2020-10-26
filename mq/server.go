@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/gocraft/dbr/dialect"
-	dbr "github.com/gocraft/dbr/v2"
+	"github.com/gocraft/dbr/v2"
 	"github.com/joho/godotenv"
 	"github.com/muhammadisa/go-mq-boilerplate/mq/routes"
 	"github.com/muhammadisa/go-mq-boilerplate/mq/utils/errhandler"
