@@ -49,6 +49,8 @@
 
 - Create your database, and set the name inside .env file
 
+- Start your RabbitMQ service, and set the host,user,pass for connect to your RabbitMQ
+
 - Compiling project & Migrate tables defined inside db/schemas folder
 
   ```bash
